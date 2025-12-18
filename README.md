@@ -42,6 +42,8 @@ Simply point Fluxion to your project root (or a folder containing multiple micro
 ```bash
 fluxion -path ./my-legacy-project
 ```
+<img width="1917" height="1138" alt="image" src="https://github.com/user-attachments/assets/2da7b109-7dcf-49bd-879e-533ba518973e" />
+
 **What happens next?**
 
 1. Fluxion scans the directory tree.
