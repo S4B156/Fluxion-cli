@@ -33,7 +33,7 @@ func AnalyzeProject(pathToPom string) (*models.ProjectCandidate, error) {
 		if ext == ".yml" || ext == ".yaml" {
 			candidate.Config = ParsingYaml(foundConfig)
 		} else {
-			candidate.Config, err = ParsingProperties(foundAppJava)
+			candidate.Config, err = ParsingProperties(foundConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -73,27 +73,71 @@ func parsingXmlDependencies(path string, candidate *models.ProjectCandidate) (*m
 	features := models.ServiceFeatures{}
 
 	for _, dep := range project.Dependencies.Dependency {
-		art := dep.ArtifactID
+		art := strings.ToLower(dep.ArtifactID)
+
+		// Databases
 		if strings.Contains(art, "postgresql") {
 			features.HasPostgres = true
 		}
 		if strings.Contains(art, "mysql") {
 			features.HasMySQL = true
 		}
+		if strings.Contains(art, "mariadb") {
+			features.HasMariaDB = true
+		}
 		if strings.Contains(art, "redis") || strings.Contains(art, "jedis") || strings.Contains(art, "lettuce") {
 			features.HasRedis = true
+		}
+		if strings.Contains(art, "mongodb") {
+			features.HasMongo = true
+		}
+		if strings.Contains(art, "cassandra") {
+			features.HasCassandra = true
+		}
+		if strings.Contains(art, "elasticsearch") || strings.Contains(art, "opensearch") {
+			features.HasElastic = true
+		}
+
+		// Messaging
+		if strings.Contains(art, "kafka") {
+			features.HasKafka = true
+		}
+		if strings.Contains(art, "rabbit") || strings.Contains(art, "amqp") {
+			features.HasRabbit = true
+		}
+		if strings.Contains(art, "activemq") || strings.Contains(art, "artemis") {
+			features.HasActiveMQ = true
+		}
+
+		// Spring Cloud & Discovery
+		if strings.Contains(art, "eureka") {
+			features.HasEureka = true
 		}
 		if strings.Contains(art, "consul") {
 			features.HasConsul = true
 		}
-		if strings.Contains(art, "kafka") {
-			features.HasKafka = true
+		if strings.Contains(art, "spring-cloud-starter-config") {
+			features.HasConfigClient = true
 		}
-		if strings.Contains(art, "rabbit") {
-			features.HasKafka = true
+		if strings.Contains(art, "spring-cloud-config-server") {
+			features.HasConfigServer = true
 		}
-		if strings.Contains(art, "eureka") {
-			features.HasEureka = true
+		if strings.Contains(art, "spring-cloud-starter-gateway") {
+			features.HasGateway = true
+		}
+		if strings.Contains(art, "feign") {
+			features.HasFeign = true
+		}
+
+		// Observability & Security
+		if strings.Contains(art, "zipkin") || strings.Contains(art, "sleuth") || strings.Contains(art, "micrometer-tracing") {
+			features.HasZipkin = true
+		}
+		if strings.Contains(art, "prometheus") || strings.Contains(art, "micrometer") {
+			features.HasPrometheus = true
+		}
+		if strings.Contains(art, "vault") {
+			features.HasVault = true
 		}
 	}
 

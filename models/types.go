@@ -27,10 +27,10 @@ type Project struct {
 }
 
 type AppService struct {
-	Name    string
-	Path    string
-	Port    int
-	Depends []string
+	Name     string
+	Path     string
+	Port     int
+	Features ServiceFeatures
 }
 
 type GlobalConfig struct {
@@ -54,14 +54,32 @@ type ProjectCandidate struct {
 }
 
 type ServiceFeatures struct {
-	HasPostgres bool
-	HasMySQL    bool
-	HasRedis    bool
-	HasMongo    bool
+	// Databases
+	HasPostgres  bool
+	HasMySQL     bool
+	HasMariaDB   bool
+	HasMongo     bool
+	HasCassandra bool
+	HasRedis     bool
+	HasElastic   bool
+
+	// Messaging
 	HasKafka    bool
-	HasConsul   bool
 	HasRabbit   bool
-	HasEureka   bool
+	HasActiveMQ bool
+
+	// Spring Cloud / Infrastructure
+	HasEureka       bool
+	HasConsul       bool
+	HasConfigClient bool
+	HasConfigServer bool
+	HasGateway      bool
+	HasFeign        bool
+	
+	// Observability & Security
+	HasZipkin     bool
+	HasPrometheus bool
+	HasVault      bool
 }
 
 type ComposeData struct {
