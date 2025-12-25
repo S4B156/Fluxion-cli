@@ -15,51 +15,49 @@ func GenerateDockerfile(rootPath string, info models.Project, port int) {
 	if !Is31OrOlder(info.Parent.SpringVersion) {
 		launch = ".launch"
 	}
-
+	
 	dockerfileContent := fmt.Sprintf(
 `# --- Этап 1: Сборка (Builder) ---
-FROM eclipse-temurin:%s-jdk-alpine AS builder
+# Используем образ с предустановленным Maven. 
+# Это надежнее, чем полагаться на mvnw в старых проектах.
+FROM maven:3.9-eclipse-temurin-%s-alpine AS builder
 WORKDIR /app
 
-# Копируем файлы maven wrapper и настройки
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Копируем только файл зависимостей
+COPY pom.xml ./
 
-# Скачиваем зависимости (чтобы закэшировать этот слой)
-# Ускоряет повторные сборки, если pom.xml не менялся
-RUN ./mvnw dependency:go-offline
+# Скачиваем зависимости (кэширование Docker слоя)
+RUN mvn dependency:go-offline -B
 
-# Копируем исходный код и собираем приложение
+# Копируем исходный код
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+
+# Собираем приложение
+RUN mvn clean package -DskipTests
 
 # Разделяем fat-jar на слои (Layertools)
-# Это фича Spring Boot, позволяющая отделить библиотеки от кода
+# (Тут всё ок, оставляем как было)
 RUN java -Djarmode=layertools -jar target/*.jar extract
 
 # --- Этап 2: Запуск (Runtime) ---
-# Используем JRE (только среда выполнения), а не JDK.
-# Alpine - очень легкая версия Linux.
+# Используем легковесную JRE для запуска
 FROM eclipse-temurin:%s-jre-alpine
 
 WORKDIR /app
 
-# Создаем пользователя с ограниченными правами
+# Создаем пользователя (Security best practice)
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Копируем слои из этапа сборки
-# Порядок важен! Сначала редко меняющиеся (зависимости), потом часто меняющиеся (код).
+# Копируем слои из билдера
 COPY --from=builder /app/dependencies/ ./
 COPY --from=builder /app/spring-boot-loader/ ./
 COPY --from=builder /app/snapshot-dependencies/ ./
 COPY --from=builder /app/application/ ./
 
-# Переключаемся на безопасного пользователя
 USER spring
 
 EXPOSE %d
 
-# Запускаем приложение через JarLauncher (оптимизировано для слоев)
 ENTRYPOINT ["java", "org.springframework.boot.loader%s.JarLauncher"]
 `, info.Properties.JavaVersion, info.Properties.JavaVersion, port, launch)
 
